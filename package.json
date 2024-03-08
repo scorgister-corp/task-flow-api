@@ -22,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/scorgister-corp/task-flow-api/issues"
   },
-  "homepage": "https://github.com/scorgister-corp/task-flow-api#readme"
+  "homepage": "https://github.com/scorgister-corp/task-flow-api#readme",
+  "dependencies": {
+    "express": "^4.18.3"
+  }
 }
