@@ -1,8 +1,25 @@
 var loggerName = "";
 var nameHistory = [];
 
+const STATUS = {
+    OK: "+",
+    ERROR: "-"
+}
+
 function print(...data) {
-    var str = "[" + loggerName + "] ";
+    print_(data);
+}
+
+function printOk(...data) {
+    print_(data, STATUS.OK);
+}
+
+function printError(...data) {
+    print_(data, STATUS.ERROR);
+}
+
+function print_(data, status = STATUS.OK) {
+    var str = "[" + status + "][" + loggerName + "] ";
     for(var i = 0; i < data.length - 1; i++)
         str += data[i] + " ";
     if(data.length > 0)
@@ -30,5 +47,7 @@ function restorLoggerName() {
 }
 
 module.exports.print = print;
+module.exports.printOk = printOk;
+module.exports.printError = printError;
 module.exports.setLoggerName = setLoggerName;
 module.exports.restorLoggerName = restorLoggerName;

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "server": "node index.js && exit 0"
+    "server": "node index.js && exit 0",
+    "generate-server-token": "node generate_token.js && exit 0"
   },
   "repository": {
     "type": "git",
@@ -24,6 +25,7 @@
   },
   "homepage": "https://github.com/scorgister-corp/task-flow-api#readme",
   "dependencies": {
+    "envfile": "^7.1.0",
     "express": "^4.18.3"
   }
 }
