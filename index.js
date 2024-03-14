@@ -1,9 +1,11 @@
 const logger = require("./logger.js");
+const server = require('./server.js')
+
+const log = logger("Main");
+
 
 function entryPoint() {
-    logger.setLoggerName("TaskFlow");
-    
-    logger.print("Hello World!");
+    server.start(8100);    
 }
 
 entryPoint();

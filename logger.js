@@ -1,53 +1,47 @@
-var loggerName = "";
-var nameHistory = [];
-
 const STATUS = {
-    OK: "+",
+    oK: "+",
     ERROR: "-"
 }
 
-function print(...data) {
-    print_(data);
-}
+class Logger {
+    
+    constructor(loggerName) {
+        this.setLoggerName(loggerName);
+    }
 
-function printOk(...data) {
-    print_(data, STATUS.OK);
-}
-
-function printError(...data) {
-    print_(data, STATUS.ERROR);
-}
-
-function print_(data, status = STATUS.OK) {
-    var str = "[" + status + "][" + loggerName + "] ";
-    for(var i = 0; i < data.length - 1; i++)
-        str += data[i] + " ";
-    if(data.length > 0)
-        str += data[data.length-1];
-
-    console.log(str);
-}
-
-function setLoggerName(name) {
-    if(name in [undefined, null])
-        return;
-
-    nameHistory.push(loggerName);
-    loggerName = name;
-}
-
-function restorLoggerName() {
-    if(nameHistory.length == 0) {
-        loggerName = "";
-        return;
+    print(...data) {
+        this.#print_(data);
     }
     
-    loggerName = nameHistory[nameHistory.length-1];
-    nameHistory.splice(0, -1);
+    printError(...data) {
+        this.#print_(data, STATUS.ERROR);
+    }
+
+    #print_(data, status = STATUS.oK) {
+        var str = "[" + status + "][" + this.getLoggerName() + "] ";
+        for(var i = 0; i < data.length - 1; i++)
+            str += data[i] + " ";
+        if(data.length > 0)
+            str += data[data.length-1];
+    
+        console.log(str);
+    }
+
+    getLoggerName() {
+        return this.loggerName;
+    }
+
+    setLoggerName(name) {
+        if(name in [undefined, null])
+            name = module.filename.slice(module.filename.lastIndexOf("/") + 1);
+    
+        this.loggerName = name;
+    }
+
 }
 
-module.exports.print = print;
-module.exports.printOk = printOk;
-module.exports.printError = printError;
-module.exports.setLoggerName = setLoggerName;
-module.exports.restorLoggerName = restorLoggerName;
+function createLogger(name) {
+    return new Logger(name);
+}
+
+module.exports = createLogger;
