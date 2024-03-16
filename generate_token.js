@@ -1,6 +1,5 @@
 const logger = require("./logger");
 const env = require("./env");
-const fs = require('fs');
 
 const log = logger("Token Generator");
 
