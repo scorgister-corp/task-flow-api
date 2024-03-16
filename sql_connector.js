@@ -1,14 +1,16 @@
 const mysql = require('sync-mysql');
+const env = require('./env')
 const logger = require("./logger");
 const log = logger("SQL Connector");
 
 function connect() {
-    
+    var parsedFile = env.loadFile("./.env")
+
     var conn = new mysql({
-        host: process.env.SQL_HOST,
-        user: process.env.SQL_USER,
-        password: process.env.SQL_PASSWORD,
-        database: process.env.SQL_DATABASE
+        host: parsedFile["SQL_HOST"],
+        user: parsedFile["SQL_USER"],
+        password: parsedFile["SQL_PASSWORD"],
+        database: parsedFile["SQL_DATABASE"]
     });
     
     log.print("Connection to database established");
