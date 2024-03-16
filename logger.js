@@ -9,22 +9,18 @@ class Logger {
         this.setLoggerName(loggerName);
     }
 
-    print(...data) {
+    print(data) {
         this.#print_(data);
     }
     
-    printError(...data) {
+    printError(data) {
         this.#print_(data, STATUS.ERROR);
     }
 
     #print_(data, status = STATUS.oK) {
         var str = "[" + status + "][" + this.getLoggerName() + "] ";
-        for(var i = 0; i < data.length - 1; i++)
-            str += data[i] + " ";
-        if(data.length > 0)
-            str += data[data.length-1];
-    
-        console.log(str);
+        
+        console.log(str, data);
     }
 
     getLoggerName() {
