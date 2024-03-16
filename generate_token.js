@@ -2,10 +2,11 @@ const logger = require("./logger");
 const envfile = require("envfile");
 const fs = require('fs');
 
+const log = logger("Token Generator");
+
 const CHAR_LIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const TOKEN_LENGTH = 64;
 
-logger.setLoggerName("Token Generator");
 
 function gen() {
     var ret = "";
@@ -18,14 +19,12 @@ function gen() {
 function genereteAndSavceNewToken() {
     let parsedFile = envfile.parse("./.env");
     parsedFile.ACCESS_TOKEN_SECRET = gen();
-    logger.print("Acess token successfully generated !");
+    log.print("Acess token successfully generated !");
     parsedFile.REFRESH_TOKEN_SECRET = gen();
-    logger.print("Refresh token successfully generated !");
+    log.print("Refresh token successfully generated !");
 
     fs.writeFileSync('./.env', envfile.stringify(parsedFile));
-    logger.print("Tokens saved !");
+    log.print("Tokens saved !");
 }
 
 genereteAndSavceNewToken();
-
-logger.restorLoggerName();
