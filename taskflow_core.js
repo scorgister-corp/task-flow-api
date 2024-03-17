@@ -16,25 +16,24 @@ var errCode = 0
 function createAccount(username, password, email) {
     if (!username)
         errCode = NO_USERNAME;
-    if (!password)
+    else if (!password)
         errCode =  NO_PASSWORD;
-    if (!email)
+    else if (!email)
         errCode =  NO_EMAIL;
-    if (
-        inc(["'", '"', "`", "{", "}", "[", "]", "(", ")", "|"], username)
-        || inc(["'", '"', "`", "{", "}", "[", "]", "(", ")", "|"], password)
-        || inc(["'", '"', "`", "{", "}", "[", "]", "(", ")", "|"], email)
+    else if (
+        inc(["'", '"', "`", "{", "}", "[", "]", "(", ")", "|", " "], username)
+        || inc(["'", '"', "`", "{", "}", "[", "]", "(", ")", "|", " "], email)
     )
         verrCode =  SQL_ERR;
-    if (sql.query(`SELECT COUNT(username) AS c FROM profile WHERE username = "${username}"`)[0]["c"] != 0)
+    else if (sql.query(`SELECT COUNT(username) AS c FROM profile WHERE username = "${username}"`)[0]["c"] != 0)
         errCode =  USED_USERNAME;
-    if (sql.query(`SELECT COUNT(email) AS c FROM profile WHERE email = "${email}"`)[0]["c"] != 0)
+    else if (sql.query(`SELECT COUNT(email) AS c FROM profile WHERE email = "${email}"`)[0]["c"] != 0)
         errCode =  USED_EMAIL;
-    if (!validateEmail(email))
+    else if (!validateString(email, /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/))
         errCode =  MAIL_ERR;
 
     if (errCode != 0) {
-        log.printError("Error with account creation: " + username + ", " + email);
+        log.printError("Error " + errCode + " with account creation: " + username + ", " + email);
         
         var tempCode = errCode;
         errCode = 0;
@@ -42,11 +41,17 @@ function createAccount(username, password, email) {
         return tempCode;
     }
 
-    var sqlQuery = `INSERT INTO profile (username, password, email) VALUES (${username}, ${password}, ${email})`;
-    
+    var sqlQuery = `INSERT INTO profile (username, password, email) VALUES ("${username}", "${password}", "${email}")`;
+    sql.query(sqlQuery);
+
     log.print("Account creation success: " + username + ", " + email);
 
     return 0;
+}
+
+function getTasksFromToken(token) {
+    var sqlQuerry = `SELECT group_id, title, deadline, priority, flag, status_id FROM task, connection WHERE task.owner_id = connection.profile_id AND connection.current_token = '${token.replace(/'/g, "''")}'`;
+    return sql.query(sqlQuerry);
 }
 
 function inc(arr, str) {
@@ -57,12 +62,6 @@ function inc(arr, str) {
     return false
 }
 
-const validateEmail = (email) => {
-    return String(email)
-      .toLowerCase()
-      .match(
-        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-    );
-};
-
-createAccount("aa", "bb", "a@a.com")
+function validateString(str, re) {
+    return String(str).toLowerCase().match(re);
+}
