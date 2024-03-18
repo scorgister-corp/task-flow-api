@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/scorgister-corp/task-flow-api#readme",
   "dependencies": {
+    "body-parser": "^1.20.2",
     "envfile": "^7.1.0",
     "express": "^4.18.3"
   }
