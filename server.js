@@ -30,9 +30,22 @@ app.all("*", (req, res) => {
 
 // ---- WITH TOKEN ---- \\
 
+app.post("/register", (req, res) => {
+ if(!req.body["username"] || !req.body["password"] || !req.body["email"]) {
+        res.sendStatus(401);
+        return;
+    }
+
+    var username = req.body["username"];
+    var password = req.body["password"];
+    var email    = req.body["email"];
+
+    // creer l'utilisateur
+    res.json({result: true});
+});
+
 app.post("/login", (req, res) => {
-    console.log(!req.body["testee"]);
-   if(!req.body["username"] || !req.body["password"]) {
+    if(!req.body["username"] || !req.body["password"]) {
         res.sendStatus(401);
         return;
     }
