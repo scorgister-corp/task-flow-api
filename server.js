@@ -33,7 +33,6 @@ app.post("/register", (req, res) => {
 });
    
 app.post("/login", (req, res) => {
-    console.log(req.body);
     if(req.body["username"] == undefined || req.body["password"] == undefined) {
         send400(res);
         return;
