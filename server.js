@@ -1,5 +1,5 @@
 const express = require('express');
-const bodyParser = require('body-parser')
+const handler = require('./handler')
 const core = require('./taskflow_core')
 const logger = require('./logger');
 
@@ -11,14 +11,15 @@ app.use(express.json());
 const VERSION = "1.0"
 const BAD_CREDENTIALS = -1;
 
+const handlers = handler(app, defaultMethodNotAllowedHandler);
 
 // -- WITHOUT TOKEN -- \\
 
-app.get("/version", (req, res) => {
-    res.json({version: VERSION})
+handlers.get("/version", (req, res) => {
+    res.json({version: VERSION});
 });
 
-app.post("/register", (req, res) => {
+handlers.post("/register", (req, res) => {
     if(req.body["username"] == undefined || req.body["password"] == undefined || req.body["email"] == undefined) {
         send400(res);
         return;
@@ -32,7 +33,7 @@ app.post("/register", (req, res) => {
     send(res, {result: result});
 });
    
-app.post("/login", (req, res) => {
+handlers.post("/login", (req, res) => {
     if(req.body["username"] == undefined || req.body["password"] == undefined) {
         send400(res);
         return;
@@ -53,7 +54,7 @@ app.post("/login", (req, res) => {
 
 
 // verify token
-app.all("*", (req, res) => {
+handlers.all("*", (req, res) => {
     if(!req.headers["x-application-auth"]) {
         send401(res);
         return;
@@ -69,7 +70,7 @@ app.all("*", (req, res) => {
 
 
 // send 404
-app.all("*", (req, res) => {
+handlers.all("*", (req, res) => {
     send404(res);
 })
 
@@ -91,6 +92,11 @@ function send405(res) {
 
 function sendError(res, msg, code) {
     send(res, {error: code, message: msg}, code);
+}
+
+
+function defaultMethodNotAllowedHandler(req, res) {
+    send405(res);
 }
 
 /**
