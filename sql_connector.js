@@ -13,16 +13,29 @@ function connect() {
         database: parsedFile["SQL_DATABASE"]
     });
     
+    try {
+        conn.query(`SELECT verify FROM verify_connection`);
+    } catch (error) {
+        log.printError("Connection to database failed")
+        return false;
+    }
+
     log.print("Connection to database established");
     
     return conn;
 }
 
 function query(sql) {
-    if(databaseConn == undefined)
+    if(!databaseConn)
         return;
     
-    return databaseConn.query(sql);
+    try {
+        return databaseConn.query(sql);
+    }
+    catch(err) {
+        log.printError(err)
+        return false
+    }
 }
 
 var databaseConn = connect();
