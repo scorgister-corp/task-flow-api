@@ -3,6 +3,7 @@ const fs = require('fs');
 function loadFile(fileName="./.env") {
     var f = fs.readFileSync(fileName).toString();
     var lines = "";
+    
     if(f.includes("\r"))
         lines = f.split("\r\n");
     else

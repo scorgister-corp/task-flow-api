@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 
 const VERSION = "1.0"
-const BAD_CREDENTIALS = 0;
+const BAD_CREDENTIALS = -1;
 
 
 // -- WITHOUT TOKEN -- \\
@@ -19,8 +19,8 @@ app.get("/version", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-    if(!req.body["username"] || !req.body["password"] || !req.body["email"]) {
-        send401(res);
+    if(req.body["username"] == undefined || req.body["password"] == undefined || req.body["email"] == undefined) {
+        send400(res);
         return;
     }
    
