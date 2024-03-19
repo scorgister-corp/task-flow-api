@@ -1,6 +1,7 @@
-const logger = require('./logger')
-const log = logger("Core")
+const logger = require('./logger');
+const log = logger("Core");
 const sql = require('./sql_connector');
+const uuid = require('uuid');
 
 const SQL_ERR = 1
 const NO_USERNAME = -1
@@ -41,7 +42,7 @@ function createAccount(username, password, email) {
         return tempCode;
     }
 
-    var sqlQuery = `INSERT INTO profile (username, password, email) VALUES ("${username}", "${password}", "${email}")`;
+    var sqlQuery = `INSERT INTO profile (username, password, email, token) VALUES ("${username}", "${password}", "${email}", "${generateToken()}")`;
     sql.query(sqlQuery);
 
     log.print("Account creation success: " + username + ", " + email);
@@ -52,6 +53,15 @@ function createAccount(username, password, email) {
 function getTasksFromToken(token) {
     var sqlQuerry = `SELECT group_id, title, deadline, priority, flag, status_id FROM task, connection WHERE task.owner_id = connection.profile_id AND connection.current_token = '${token.replace(/'/g, "''")}'`;
     return sql.query(sqlQuerry);
+}
+
+function getTokenFromAccountInfo(username, password) {
+    var sqlQuerry = `SELECT token FROM profile WHERE username = "${username}" AND password = "${password}"`;
+    var result = sql.query(sqlQuerry);
+    if (result.length == 0) {
+        return false;
+    }
+    return result[0]["token"];
 }
 
 function inc(arr, str) {
@@ -65,3 +75,18 @@ function inc(arr, str) {
 function validateString(str, re) {
     return String(str).toLowerCase().match(re);
 }
+
+function generateToken() {
+    return uuid.v4();
+}
+
+module.exports.createAccount = createAccount;
+module.exports.getTasksFromToken = getTasksFromToken;
+module.exports.getTokenFromAccountInfo = getTokenFromAccountInfo;
+module.exports.SQL_ERR = SQL_ERR;
+module.exports.NO_EMAIL = NO_EMAIL;
+module.exports.NO_PASSWORD = NO_PASSWORD;
+module.exports.NO_USERNAME = NO_USERNAME;
+module.exports.USED_EMAIL = USED_EMAIL;
+module.exports.USED_USERNAME = USED_USERNAME;
+module.exports.MAIL_ERR = MAIL_ERR;
