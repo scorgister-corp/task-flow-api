@@ -3,10 +3,12 @@ const env = require('./env')
 const logger = require("./logger");
 const log = logger("SQL Connector");
 
+var databaseConn = undefined;
+
 function connect() {
     var parsedFile = env.loadFile("./.env")
 
-    var conn = new mysql({
+    databaseConn = new mysql({
         host: parsedFile["SQL_HOST"],
         user: parsedFile["SQL_USER"],
         password: parsedFile["SQL_PASSWORD"],
@@ -14,15 +16,13 @@ function connect() {
     });
     
     try {
-        conn.query(`SELECT verify FROM verify_connection`);
+        query(`SELECT verify FROM verify_connection`);
     } catch (error) {
         log.printError("Connection to database failed")
         return false;
     }
 
     log.print("Connection to database established");
-    
-    return conn;
 }
 
 function query(sql) {
@@ -38,6 +38,6 @@ function query(sql) {
     }
 }
 
-var databaseConn = connect();
 
+module.exports.connect = connect;
 module.exports.query = query;

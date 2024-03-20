@@ -73,6 +73,8 @@ function getTokenFromAccountInfo(username, password) {
     return result[0]["token"];
 }
 
+module.exports.connect = sql.connect;
+
 module.exports.createAccount = createAccount;
 module.exports.getTasksFromToken = getTasksFromToken;
 module.exports.getTokenFromAccountInfo = getTokenFromAccountInfo;
