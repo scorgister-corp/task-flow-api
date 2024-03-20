@@ -59,13 +59,29 @@ function createAccount(username, password, email) {
     return 0;
 }
 
+function checkToken(token) {
+    var cleanToken = validateString(token);
+
+    var sqlQuerry = `SELECT * FROM profile WHERE token = "${cleanToken}"`;
+
+    if (sql.query(sqlQuerry).length == 0)
+        return false;
+    
+    return true;
+}
+
 function getTasksFromToken(token) {
-    var sqlQuerry = `SELECT group_id, title, deadline, priority, flag, status_id FROM task, connection WHERE task.owner_id = connection.profile_id AND connection.current_token = '${token}'`;
+    var cleanToken = validateString(token);
+
+    var sqlQuerry = `SELECT group_id, title, deadline, priority, flag, status_id FROM task, connection WHERE task.owner_id = connection.profile_id AND connection.current_token = '${cleanToken}'`;
     return sql.query(sqlQuerry);
 }
 
 function getTokenFromAccountInfo(username, password) {
-    var sqlQuerry = `SELECT token FROM profile WHERE username = "${username}" AND password = "${hash(password)}"`;
+    var cleanUsername = validateString(username);
+    var cleanPassword = validateString(password)
+
+    var sqlQuerry = `SELECT token FROM profile WHERE username = "${cleanUsername}" AND password = "${hash(cleanPassword)}"`;
     var result = sql.query(sqlQuerry);
     if (result.length == 0) {
         return false;
@@ -73,11 +89,15 @@ function getTokenFromAccountInfo(username, password) {
     return result[0]["token"];
 }
 
+sql.connect()
+console.log(checkToken("azertyuio"));
+
 module.exports.connect = sql.connect;
 
 module.exports.createAccount = createAccount;
 module.exports.getTasksFromToken = getTasksFromToken;
 module.exports.getTokenFromAccountInfo = getTokenFromAccountInfo;
+module.exports.checkToken = checkToken;
 module.exports.NO_USERNAME = NO_USERNAME;
 module.exports.NO_PASSWORD = NO_PASSWORD;
 module.exports.NO_EMAIL = NO_EMAIL;
