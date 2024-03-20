@@ -73,7 +73,7 @@ function checkToken(token) {
 function getTasksFromToken(token) {
     var cleanToken = validateString(token);
 
-    var sqlQuerry = `SELECT group_id, title, deadline, priority, flag, status_id FROM task, connection WHERE task.owner_id = connection.profile_id AND connection.current_token = '${cleanToken}'`;
+    var sqlQuerry = `SELECT group_id, title, deadline, priority, flag, status_id FROM task, profile WHERE task.owner_id = profile.id AND profile.token = '${cleanToken}'`;
     return sql.query(sqlQuerry);
 }
 
@@ -88,9 +88,6 @@ function getTokenFromAccountInfo(username, password) {
     }
     return result[0]["token"];
 }
-
-sql.connect()
-console.log(checkToken("azertyuio"));
 
 module.exports.connect = sql.connect;
 
