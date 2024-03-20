@@ -23,6 +23,7 @@ function connect() {
     }
 
     log.print("Connection to database established");
+    return true;
 }
 
 function query(sql) {
@@ -34,10 +35,9 @@ function query(sql) {
     }
     catch(err) {
         log.printError(err)
-        return false
+        throw err;
     }
 }
-
 
 module.exports.connect = connect;
 module.exports.query = query;
