@@ -131,7 +131,14 @@ function send(res, body, code=200) {
 }
 
 module.exports.start = (port=8100) => {
+    // init database connection
+    if(core.connect() === false) {
+        log.printError("Error: closing the program");
+        return false;
+    }
+
     app.listen(port, () => {
         log.print("Server started at localhost:" + port);
     });
+    return true;
 };
