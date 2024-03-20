@@ -54,19 +54,32 @@ handlers.post("/login", (req, res) => {
 
 
 // verify token
-handlers.all("*", (req, res) => {
-    if(!req.headers["x-application-auth"]) {
+handlers.all("*", (req, res, next) => {
+    if(!getTokenFromHeader(req)) {
         send401(res);
         return;
     }
 
     // vérifier le token 
     //si faux alors send 401
-    req.next();
+    next();
 });
 
 // ---- WITH TOKEN ---- \\
 
+handlers.get("/tasks", (req, res) => {
+    var token = getTokenFromHeader(req);
+    if(token == undefined || token == "") {
+        send400(res);
+        return;
+    }
+
+    var tasks = core.getTasksFromToken(token);
+    if(tasks != undefined && tasks.length != 0)
+        send(res, {tasks: tasks});
+    else
+        send(res, {tasks: []})
+});
 
 
 // send 404
@@ -97,6 +110,10 @@ function sendError(res, msg, code) {
 
 function defaultMethodNotAllowedHandler(req, res) {
     send405(res);
+}
+
+function getTokenFromHeader(req) {
+    return req.headers["x-application-auth"];
 }
 
 /**
