@@ -90,10 +90,9 @@ function getTokenFromAccountInfo(username, password) {
 }
 
 sql.connect()
-console.log(checkToken("azertyuio"));
+
 
 module.exports.connect = sql.connect;
-
 module.exports.createAccount = createAccount;
 module.exports.getTasksFromToken = getTasksFromToken;
 module.exports.getTokenFromAccountInfo = getTokenFromAccountInfo;
