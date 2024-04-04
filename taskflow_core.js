@@ -10,12 +10,13 @@ const NO_EMAIL = -3
 const USED_USERNAME = -4
 const USED_EMAIL = -5
 const MAIL_ERR = -6
+const TOO_MANY_RESULTS_ERR = -7
 
 var errCode = 0
 
 
-function validateString(str) {
-    return String(str).toLowerCase().replace(/'/g, "''");
+function cleanString(input) {
+    return String(input).toLowerCase().replace(/'/g, "''");
 }
 
 function generateToken() {
@@ -23,12 +24,13 @@ function generateToken() {
 }
 
 function hash(input) {
-    return sha.sha256(input);
+    return cleanString(sha.sha256(input));
 }
 
 function createAccount(username, password, email) {
-    var cleanUsername = validateString(username);
-    var cleanEmail = validateString(email);
+    var cleanUsername = cleanString(username);
+    var cleanPassword = cleanString(password);
+    var cleanEmail = cleanString(email);
     if (!cleanUsername)
         errCode = NO_USERNAME;
     else if (!password)
@@ -37,10 +39,10 @@ function createAccount(username, password, email) {
         errCode =  NO_EMAIL;
     else if (sql.query(`SELECT COUNT(username) AS c FROM profile WHERE username = "${cleanUsername}"`)[0]["c"] != 0)
         errCode =  USED_USERNAME;
-    else if (sql.query(`SELECT COUNT(email) AS c FROM profile WHERE email = "${cleanEmail}"`)[0]["c"] != 0)
-        errCode =  USED_EMAIL;
     else if (!cleanEmail.toLowerCase().match(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/))
         errCode =  MAIL_ERR;
+    else if (sql.query(`SELECT COUNT(email) AS c FROM profile WHERE email = "${cleanEmail}"`)[0]["c"] != 0)
+        errCode =  USED_EMAIL;
 
     if (errCode != 0) {
         log.printError("Error " + errCode + " with account creation: " + cleanUsername + ", " + cleanEmail);
@@ -51,7 +53,7 @@ function createAccount(username, password, email) {
         return tempCode;
     }
 
-    var sqlQuery = `INSERT INTO profile (username, password, email, token) VALUES ("${cleanUsername}", "${hash(password)}", "${cleanEmail}", "${generateToken()}")`;
+    var sqlQuery = `INSERT INTO profile (username, password, email, token) VALUES ("${cleanUsername}", "${hash(cleanPassword)}", "${cleanEmail}", "${generateToken()}")`;
     sql.query(sqlQuery);
 
     log.print("Account creation success: " + cleanUsername + ", " + cleanEmail);
@@ -60,7 +62,7 @@ function createAccount(username, password, email) {
 }
 
 function checkToken(token) {
-    var cleanToken = validateString(token);
+    var cleanToken = cleanString(token);
 
     var sqlQuerry = `SELECT * FROM profile WHERE token = "${cleanToken}"`;
 
@@ -70,16 +72,9 @@ function checkToken(token) {
     return true;
 }
 
-function getTasksFromToken(token) {
-    var cleanToken = validateString(token);
-
-    var sqlQuerry = `SELECT group_id, title, deadline, priority, flag, status_id FROM task, profile WHERE task.owner_id = profile.id AND profile.token = '${cleanToken}'`;
-    return sql.query(sqlQuerry);
-}
-
 function getTokenFromAccountInfo(username, password) {
-    var cleanUsername = validateString(username);
-    var cleanPassword = validateString(password)
+    var cleanUsername = cleanString(username);
+    var cleanPassword = cleanString(password)
 
     var sqlQuerry = `SELECT token FROM profile WHERE username = "${cleanUsername}" AND password = "${hash(cleanPassword)}"`;
     var result = sql.query(sqlQuerry);
@@ -89,15 +84,25 @@ function getTokenFromAccountInfo(username, password) {
     return result[0]["token"];
 }
 
+function getTasksFromToken(token) {
+    var cleanToken = cleanString(token);
+
+    var sqlQuerry = `SELECT group_id, title, deadline, priority, flag, status_id FROM task, profile WHERE task.owner_id = profile.id AND profile.token = '${cleanToken}'`;
+    return sql.query(sqlQuerry);
+}
+
+
 module.exports.connect = sql.connect;
 
 module.exports.createAccount = createAccount;
-module.exports.getTasksFromToken = getTasksFromToken;
-module.exports.getTokenFromAccountInfo = getTokenFromAccountInfo;
 module.exports.checkToken = checkToken;
+module.exports.getTokenFromAccountInfo = getTokenFromAccountInfo;
+module.exports.getTasksFromToken = getTasksFromToken;
+
 module.exports.NO_USERNAME = NO_USERNAME;
 module.exports.NO_PASSWORD = NO_PASSWORD;
 module.exports.NO_EMAIL = NO_EMAIL;
 module.exports.USED_USERNAME = USED_USERNAME;
 module.exports.USED_EMAIL = USED_EMAIL;
 module.exports.MAIL_ERR = MAIL_ERR;
+module.exports.TOO_MANY_RESULTS_ERR = TOO_MANY_RESULTS_ERR;
