@@ -55,13 +55,16 @@ handlers.post("/login", (req, res) => {
 
 // verify token
 handlers.all("*", (req, res, next) => {
-    if(!getTokenFromHeader(req)) {
+    var token = getTokenFromHeader(req);
+    if(!token) {
         send401(res);
         return;
     }
-
-    // vérifier le token 
-    //si faux alors send 401
+    if(!core.checkToken(token)) {
+        send401(res);
+        return;
+    }
+    
     next();
 });
 
@@ -128,7 +131,14 @@ function send(res, body, code=200) {
 }
 
 module.exports.start = (port=8100) => {
+    // init database connection
+    if(core.connect() === false) {
+        log.printError("Error: closing the program");
+        return false;
+    }
+
     app.listen(port, () => {
         log.print("Server started at localhost:" + port);
     });
+    return true;
 };
