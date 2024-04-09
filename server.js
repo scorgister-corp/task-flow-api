@@ -70,6 +70,10 @@ handlers.all("*", (req, res, next) => {
 
 // ---- WITH TOKEN ---- \\
 
+handlers.get("/auth", (req, res) => {
+    send(res, {valid: true});
+});
+
 handlers.get("/tasks", (req, res) => {
     var token = getTokenFromHeader(req);
     if(token == undefined || token == "") {
