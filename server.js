@@ -15,6 +15,10 @@ const handlers = handler(app, defaultMethodNotAllowedHandler);
 
 // -- WITHOUT TOKEN -- \\
 
+app.options("*", (req, res) => {
+    send(res, {});
+});
+
 handlers.get("/version", (req, res) => {
     send(res, {version: VERSION});
 });
