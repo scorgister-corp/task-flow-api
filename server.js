@@ -137,7 +137,7 @@ function send(res, body, code=200) {
     res.status(code);
     res.set("Access-Control-Allow-Origin", "https://taskflow.scorgister.net")
     res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-    res.set("Access-Control-Allow-Headers", "X-Application-Auth, Content-Type")
+    res.set("Access-Control-Allow-Headers", "*")
     res.json(body);
 }
 
