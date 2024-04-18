@@ -131,6 +131,7 @@ function getTokenFromHeader(req) {
  */
 function send(res, body, code=200) {
     res.status(code);
+    res.set("Access-Control-Allow-Origin", "https://taskflow.scorgister.net")
     res.json(body);
 }
 
