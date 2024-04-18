@@ -5,7 +5,7 @@ const log = logger("Main");
 
 
 function entryPoint() {
-    server.start(8200);    
+    server.start(8100);    
 }
 
 entryPoint();
