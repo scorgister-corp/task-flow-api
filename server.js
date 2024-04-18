@@ -16,7 +16,7 @@ const handlers = handler(app, defaultMethodNotAllowedHandler);
 // -- WITHOUT TOKEN -- \\
 
 handlers.get("/version", (req, res) => {
-    res.json({version: VERSION});
+    send(res, {version: VERSION});
 });
 
 handlers.post("/register", (req, res) => {
