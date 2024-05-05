@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 
 const VERSION = "1.0"
-const BAD_CREDENTIALS = -1;
+const BAD_CREDENTIALS = "bad credentials";
 
 const handlers = handler(app, defaultMethodNotAllowedHandler);
 
@@ -48,7 +48,7 @@ handlers.post("/login", (req, res) => {
    
     var result = core.getTokenFromAccountInfo(username, password);
     if(!result) {
-        send(res, {connection: false, error: BAD_CREDENTIALS})
+        send(res, {connection: false, message: BAD_CREDENTIALS})
         return;
     }
    
