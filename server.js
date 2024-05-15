@@ -144,10 +144,15 @@ function send(res, body, code=200) {
 module.exports.start = (port=8100) => {
     // init database connection
     if(core.connect() === false) {
-        log.printError("Error: closing the program");
+        log.printError("Error: closing the program [0]");
         return false;
     }
 
+    if(core.connectMailer() === false) {
+        log.printError("Error: closing the program [1]");
+        return false;
+    }
+    
     app.listen(port, () => {
         log.print("Server started at localhost:" + port);
     });
