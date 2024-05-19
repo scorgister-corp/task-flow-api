@@ -72,6 +72,16 @@ function checkToken(token) {
     return true;
 }
 
+<<<<<<< Updated upstream
+=======
+function getTasksFromToken(token) {
+    var cleanToken = validateString(token);
+
+    var sqlQuerry = `SELECT group_id, title, deadline, priority FROM task, profile WHERE task.owner_id = profile.id AND profile.token = '${cleanToken}'`;
+    return sql.query(sqlQuerry);
+}
+
+>>>>>>> Stashed changes
 function getTokenFromAccountInfo(username, password) {
     var cleanUsername = cleanString(username);
     var cleanPassword = cleanString(password)
