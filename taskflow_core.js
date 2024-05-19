@@ -1,6 +1,7 @@
 const logger = require('./logger');
 const log = logger("Core");
 const sql = require('./sql_connector');
+const mailer = require('./mailer');
 const uuid = require('uuid');
 const sha = require('js-sha256')
 
@@ -89,8 +90,9 @@ function getTokenFromAccountInfo(username, password) {
     return result[0]["token"];
 }
 
-sql.connect()
 
+module.exports.connect = sql.connect;
+module.exports.connectMailer = mailer.connectGmail;
 
 module.exports.connect = sql.connect;
 module.exports.createAccount = createAccount;
