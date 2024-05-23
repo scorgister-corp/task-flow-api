@@ -9,7 +9,6 @@ function connectGmail() {
     var parsedFile = env.loadFile("./.env")
 
     try {
-        console.log(parsedFile["EMAIL_PASSWORD"]);
         transporter = nodemailer.createTransport({
             service: "Gmail",
             host: "smtp.gmail.com",

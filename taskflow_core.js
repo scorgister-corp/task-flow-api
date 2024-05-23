@@ -5,15 +5,14 @@ const mailer = require('./mailer');
 const uuid = require('uuid');
 const sha = require('js-sha256')
 
-const NO_USERNAME = -1
-const NO_PASSWORD = -2
-const NO_EMAIL = -3
-const USED_USERNAME = -4
-const USED_EMAIL = -5
-const MAIL_ERR = -6
-const TOO_MANY_RESULTS_ERR = -7
-
-var errCode = 0
+const NO_USERNAME = -1;
+const NO_PASSWORD = -2;
+const NO_EMAIL = -3;
+const USED_USERNAME = -4;
+const USED_EMAIL = -5;
+const MAIL_ERR = -6;
+const TOO_MANY_RESULTS_ERR = -7;
+const BAD_TOKEN = -8;
 
 
 function cleanString(input) {
@@ -65,9 +64,9 @@ function createAccount(username, password, email) {
 function checkToken(token) {
     var cleanToken = cleanString(token);
 
-    var sqlQuerry = `SELECT * FROM profile WHERE token = "${cleanToken}"`;
+    var sqlQuery = `SELECT * FROM profile WHERE token = "${cleanToken}"`;
 
-    if (sql.query(sqlQuerry).length == 0)
+    if (sql.query(sqlQuery).length == 0)
         return false;
     
     return true;
@@ -76,20 +75,32 @@ function checkToken(token) {
 function getTasksFromToken(token) {
     var cleanToken = validateString(token);
 
-    var sqlQuerry = `SELECT group_id, title, deadline, priority FROM task, profile WHERE task.owner_id = profile.id AND profile.token = '${cleanToken}'`;
-    return sql.query(sqlQuerry);
+    var sqlQuery = `SELECT group_id, title, deadline, priority FROM task, profile WHERE task.owner_id = profile.id AND profile.token = '${cleanToken}'`;
+    return sql.query(sqlQuery);
 }
 
 function getTokenFromAccountInfo(username, password) {
     var cleanUsername = cleanString(username);
     var cleanPassword = cleanString(password)
 
-    var sqlQuerry = `SELECT token FROM profile WHERE username = "${cleanUsername}" AND password = "${hash(cleanPassword)}"`;
-    var result = sql.query(sqlQuerry);
+    var sqlQuery = `SELECT token FROM profile WHERE username = "${cleanUsername}" AND password = "${hash(cleanPassword)}"`;
+    var result = sql.query(sqlQuery);
     if (result.length == 0) {
         return false;
     }
     return result[0]["token"];
+}
+
+function getProfileInfoFromToken(token) {
+    var cleanToken = cleanString(token);
+
+    var sqlQuery = `SELECT username, email FROM profile WHERE token = "${cleanToken}"`;
+    var result = sql.query(sqlQuery);
+
+    if (result)
+        return result[0];
+
+    return BAD_TOKEN;
 }
 
 module.exports.connect = sql.connect;
@@ -100,6 +111,7 @@ module.exports.createAccount = createAccount;
 module.exports.checkToken = checkToken;
 module.exports.getTokenFromAccountInfo = getTokenFromAccountInfo;
 module.exports.getTasksFromToken = getTasksFromToken;
+module.exports.getProfileInfoFromToken = getProfileInfoFromToken;
 
 module.exports.NO_USERNAME = NO_USERNAME;
 module.exports.NO_PASSWORD = NO_PASSWORD;
@@ -108,3 +120,4 @@ module.exports.USED_USERNAME = USED_USERNAME;
 module.exports.USED_EMAIL = USED_EMAIL;
 module.exports.MAIL_ERR = MAIL_ERR;
 module.exports.TOO_MANY_RESULTS_ERR = TOO_MANY_RESULTS_ERR;
+module.exports.BAD_TOKEN = BAD_TOKEN;
