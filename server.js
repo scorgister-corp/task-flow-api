@@ -101,8 +101,10 @@ handlers.get("/tasks", (req, res) => {
         send(res, {tasks: []});
 });
 
-handlers.get("/add", (req, res) => {
-    if(req.body["title"] == undefined || req.body["description"] == undefined || req.body["priority"] == undefined || req.body["deadline"] == undefined || req.body["groupToken"] == undefined) {
+handlers.post("/add", (req, res) => {
+    if(req.body["title"] == undefined || req.body["title"] == "" ||
+        req.body["priority"] == undefined || req.body["priority"] == "" ||
+        req.body["boardToken"] == undefined || req.body["boardToken"] == "") {
         send400(res);
         return;
     }
@@ -113,14 +115,14 @@ handlers.get("/add", (req, res) => {
     var description = req.body["description"];
     var priority = req.body["priority"];
     var deadline = req.body["deadline"];
-    var groupToken = req.body["groupToken"];
+    var boardToken = req.body["boardToken"];
     
-    //var code = core.addTask(title, description, priority, deadline, token, groupToken);
+    var code = core.addTask(title, description, priority, deadline, token, boardToken);
 
-    send(res, {success: code});
+    send(res, {code: code, message: core.getCodeMessage(code)});
 });
 
-handlers.get("/addboard", (req, res) => {
+handlers.post("/addboard", (req, res) => {
     if(req.body["title"] == undefined) {
         send400(res);
         return;
@@ -134,7 +136,7 @@ handlers.get("/addboard", (req, res) => {
     send(res, {success: code});
 });
 
-handlers.get("/search", (req, res) => {
+handlers.post("/search", (req, res) => {
     if(req.body["query"] == undefined) {
         send400(res);
         return;
@@ -148,23 +150,58 @@ handlers.get("/search", (req, res) => {
     send(res, result);
 });
 
+handlers.get("/boards", (req, res) => {
+    var token = getTokenFromHeader(req);
+    
+    var result = core.getBoards(token);
+
+    send(res, result);
+});
+
+handlers.post("/board", (req, res) => {
+    if(req.body["token"] == undefined) {
+        send400(res);
+        return;
+    }
+    var token = getTokenFromHeader(req);
+    var boardToken = req.body["token"];
+
+    
+    var result = core.getBoard(token, boardToken);
+
+    send(res, result);
+});
+
+handlers.post("/boardtasks", (req, res) => {
+    if(req.body["token"] == undefined) {
+        send400(res);
+        return;
+    }
+    var token = getTokenFromHeader(req);
+    var boardToken = req.body["token"];
+    
+    var result = core.getBoardTasks(token, boardToken);
+    if(result == undefined) {
+        send(res, {error: core.BAD_TOKEN, message: core.getCodeMessagecore.BAD_TOKEN});
+        return;
+    }
+
+    send(res, result);
+});
+
 handlers.get("/profile/infos", (req, res) => {
-    // var infos = core.getProfileInfo(getTokenFromHeader(req));
+    var infos = core.getProfileInfo(getTokenFromHeader(req));
     send(res, infos);
 });
 
 handlers.post("/profile/update", (req, res) => {
-    if(req.body["username"] == undefined || req.body["email"] == undefined || req.body["currentPassword"] == undefined || req.body["newPassword"] == undefined) {
-        send400(res);
-        return;
-    }
-
     var username = req.body["username"];
     var email = req.body["email"];
     var currentPassword = req.body["currentPassword"];
     var newPassword = req.body["newPassword"];
-    // var code = core.updateProfile(getTokenFromHeader(req), username, email, currentPassword, newPassword);
-    send(res, {success: code});
+    var code = core.updateProfileInfo(getTokenFromHeader(req), username, email, currentPassword, newPassword);
+    send(res, {code: code, message: core.getCodeMessage(code)});
+    
 });
 
 
