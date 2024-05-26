@@ -55,7 +55,20 @@ handlers.post("/login", (req, res) => {
     send(res, {connection: true, token: result});
 });
    
-
+handlers.post("/report", (req, res) => {
+    if(req.body["name"] == undefined || req.body["email"] == undefined || req.body["msg"] == undefined) {
+        send400(res);
+        return;
+    }
+   
+    var name   = req.body["username"];
+    var email  = req.body["email"];
+    var msg    = req.body["msg"];
+    var result = core.report(name, email, msg);
+   
+    send(res, {success: result});
+});
+   
 
 // verify token
 handlers.all("*", (req, res, next) => {
@@ -80,17 +93,80 @@ handlers.get("/auth", (req, res) => {
 
 handlers.get("/tasks", (req, res) => {
     var token = getTokenFromHeader(req);
-    if(token == undefined || token == "") {
-        send400(res);
-        return;
-    }
 
     var tasks = core.getTasksFromToken(token);
     if(tasks != undefined && tasks.length != 0)
         send(res, {tasks: tasks});
     else
-        send(res, {tasks: []})
+        send(res, {tasks: []});
 });
+
+handlers.get("/add", (req, res) => {
+    if(req.body["title"] == undefined || req.body["description"] == undefined || req.body["priority"] == undefined || req.body["deadline"] == undefined || req.body["groupToken"] == undefined) {
+        send400(res);
+        return;
+    }
+
+    var token = getTokenFromHeader(req);
+
+    var title = req.body["title"];
+    var description = req.body["description"];
+    var priority = req.body["priority"];
+    var deadline = req.body["deadline"];
+    var groupToken = req.body["groupToken"];
+    
+    //var code = core.addTask(title, description, priority, deadline, token, groupToken);
+
+    send(res, {success: code});
+});
+
+handlers.get("/addboard", (req, res) => {
+    if(req.body["title"] == undefined) {
+        send400(res);
+        return;
+    }
+
+    var token = getTokenFromHeader(req);
+    var title = req.body["title"];
+    
+    //var code = core.addBoard(title, token);
+
+    send(res, {success: code});
+});
+
+handlers.get("/search", (req, res) => {
+    if(req.body["query"] == undefined) {
+        send400(res);
+        return;
+    }
+    var token = getTokenFromHeader(req);
+
+    var query = req.body["query"];
+    
+    //var result = core.search(query, token);
+
+    send(res, result);
+});
+
+handlers.get("/profile/infos", (req, res) => {
+    // var infos = core.getProfileInfo(getTokenFromHeader(req));
+    send(res, infos);
+});
+
+handlers.post("/profile/update", (req, res) => {
+    if(req.body["username"] == undefined || req.body["email"] == undefined || req.body["currentPassword"] == undefined || req.body["newPassword"] == undefined) {
+        send400(res);
+        return;
+    }
+
+    var username = req.body["username"];
+    var email = req.body["email"];
+    var currentPassword = req.body["currentPassword"];
+    var newPassword = req.body["newPassword"];
+    // var code = core.updateProfile(getTokenFromHeader(req), username, email, currentPassword, newPassword);
+    send(res, {success: code});
+});
+
 
 
 // send 404
@@ -107,11 +183,11 @@ function send401(res) {
 }
 
 function send404(res) {
-    sendError(res, "Not Found", 404)
+    sendError(res, "Not Found", 404);
 }
 
 function send405(res) {
-    sendError(res, "Method Not Allowed", 405)
+    sendError(res, "Method Not Allowed", 405);
 }
 
 function sendError(res, msg, code) {
@@ -135,9 +211,9 @@ function getTokenFromHeader(req) {
  */
 function send(res, body, code=200) {
     res.status(code);
-    res.set("Access-Control-Allow-Origin", "*")
-    res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-    res.set("Access-Control-Allow-Headers", "*")
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "*");
     res.json(body);
 }
 
