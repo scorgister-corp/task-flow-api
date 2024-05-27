@@ -101,6 +101,33 @@ handlers.get("/tasks", (req, res) => {
         send(res, {tasks: []});
 });
 
+handlers.post("/task", (req, res) => {
+    if(req.body["id"] == undefined || req.body["id"] == "") {
+        send400(res);
+        return;
+    }
+
+    var id = req.body["id"];
+
+    var task = core.getTask(id);
+    send(res, task);
+});
+
+handlers.post("/task/update/state", (req, res) => {
+    if(req.body["id"] == undefined || req.body["id"] == "" ||
+        req.body["completed"] == undefined || req.body["completed"] == "") {
+        
+        send400(res);
+        return;
+    }
+
+    var id = req.body["id"];
+    var completed = req.body["completed"];
+    
+    var code = core.updateTaskState(id, completed);
+    send(res, {code: code, message: core.getCodeMessage(code)});
+});
+
 handlers.post("/add", (req, res) => {
     if(req.body["title"] == undefined || req.body["title"] == "" ||
         req.body["priority"] == undefined || req.body["priority"] == "" ||
@@ -131,9 +158,9 @@ handlers.post("/addboard", (req, res) => {
     var token = getTokenFromHeader(req);
     var title = req.body["title"];
     
-    //var code = core.addBoard(title, token);
+    var code = core.addBoard(title, token);
 
-    send(res, {success: code});
+    send(res, {code: code[0], token: code[1], message: core.getCodeMessage(code[0])});
 });
 
 handlers.post("/search", (req, res) => {
@@ -145,9 +172,9 @@ handlers.post("/search", (req, res) => {
 
     var query = req.body["query"];
     
-    //var result = core.search(query, token);
+    var result = core.search(query, token);
 
-    send(res, result);
+    send(res, {code: result[0], message: core.getCodeMessage(result[0]), tasks: result[1], boards: result[2]});
 });
 
 handlers.get("/boards", (req, res) => {
@@ -163,13 +190,16 @@ handlers.post("/board", (req, res) => {
         send400(res);
         return;
     }
+
     var token = getTokenFromHeader(req);
     var boardToken = req.body["token"];
 
     
     var result = core.getBoard(token, boardToken);
-
-    send(res, result);
+    if(result[0] == true)
+        send(res, {name: result[1], members: result[2]});
+    else
+        send(res, {code: result[0], message: core.getCodeMessage(result[0])});
 });
 
 handlers.post("/boardtasks", (req, res) => {
@@ -177,16 +207,17 @@ handlers.post("/boardtasks", (req, res) => {
         send400(res);
         return;
     }
+
     var token = getTokenFromHeader(req);
     var boardToken = req.body["token"];
     
     var result = core.getBoardTasks(token, boardToken);
-    if(result == undefined) {
-        send(res, {error: core.BAD_TOKEN, message: core.getCodeMessagecore.BAD_TOKEN});
+    if(result[0] != true) {
+        send(res, {code: core.BAD_TOKEN, message: core.getCodeMessage(core.BAD_TOKEN)});
         return;
     }
 
-    send(res, result);
+    send(res, result[1]);
 });
 
 handlers.get("/profile/infos", (req, res) => {
@@ -199,12 +230,25 @@ handlers.post("/profile/update", (req, res) => {
     var email = req.body["email"];
     var currentPassword = req.body["currentPassword"];
     var newPassword = req.body["newPassword"];
+
     var code = core.updateProfileInfo(getTokenFromHeader(req), username, email, currentPassword, newPassword);
+
     send(res, {code: code, message: core.getCodeMessage(code)});
-    
 });
 
+handlers.post("/join", (req, res) => {
+    if(req.body["token"] == undefined || req.body["token"] == "") {
+        send400(res);
+        return;
+    }
 
+    var boardToken = req.body["token"];
+    var token = getTokenFromHeader(req);
+
+    var result = core.joinBoard(token, boardToken);
+
+    send(res, {code: result, message: core.getCodeMessage(result)});
+});
 
 // send 404
 handlers.all("*", (req, res) => {
