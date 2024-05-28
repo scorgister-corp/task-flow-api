@@ -269,6 +269,11 @@ function search(query, token) {
     return [true, tasks, boards];
 }
 
+function deleteTask(taskId) {
+    sql.query(`DELETE FROM task WHERE id = ?`, [taskId]);
+    return true;
+}
+
 function getCodeMessage(code) {
     switch(code) {
         case NO_USERNAME:
@@ -319,6 +324,8 @@ module.exports.addBoard = addBoard;
 module.exports.joinBoard = joinBoard;
 module.exports.isRegisteredBoard = isRegisteredBoard;
 module.exports.search = search;
+module.exports.deleteTask = deleteTask;
+
 
 module.exports.getCodeMessage = getCodeMessage;
 

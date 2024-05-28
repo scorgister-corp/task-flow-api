@@ -250,6 +250,18 @@ handlers.post("/join", (req, res) => {
     send(res, {code: result, message: core.getCodeMessage(result)});
 });
 
+handlers.post("/task/delete", (req, res) => {
+    if(req.body["id"] == undefined || req.body["id"] == "") {
+        send400(res);
+        return;
+    }
+    var id = req.body["id"];
+
+   var result = core.deleteTask(id);
+
+    send(res, {code: result, message: core.getCodeMessage(result)});
+});
+
 // send 404
 handlers.all("*", (req, res) => {
     send404(res);
