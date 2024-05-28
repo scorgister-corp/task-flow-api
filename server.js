@@ -34,7 +34,7 @@ handlers.post("/register", (req, res) => {
     var email    = req.body["email"];
     var result   = core.createAccount(username, password, email);
    
-    send(res, {result: result});
+    send(res, {code: result, message: core.getCodeMessage(result)});
 });
    
 handlers.post("/login", (req, res) => {

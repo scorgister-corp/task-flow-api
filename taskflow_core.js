@@ -33,6 +33,8 @@ function createAccount(username, password, email) {
     var cleanUsername = cleanString(username);
     var cleanPassword = cleanString(password);
     var cleanEmail = cleanString(email);
+    var errCode = true;
+
     if (!cleanUsername)
         errCode = NO_USERNAME;
     else if (!password)
@@ -48,11 +50,8 @@ function createAccount(username, password, email) {
 
     if (errCode != 0) {
         log.printError("Error " + errCode + " with account creation: " + cleanUsername + ", " + cleanEmail);
-        
-        var tempCode = errCode;
-        errCode = 0;
 
-        return tempCode;
+        return errCode;
     }
 
     var sqlQuery = `INSERT INTO profile (username, password, email, token) VALUES ("${cleanUsername}", "${hash(cleanPassword)}", "${cleanEmail}", "${generateToken()}")`;
@@ -60,7 +59,7 @@ function createAccount(username, password, email) {
 
     log.print("Account creation success: " + cleanUsername + ", " + cleanEmail);
 
-    return 0;
+    return true;
 }
 
 function checkToken(token) {
