@@ -264,7 +264,7 @@ function search(query, token) {
 
     query = query.toLowerCase();
 
-    var tasks = sql.query(`SELECT task.id AS id, board.token AS board_token, title, description, deadline, priority, completed FROM task, board WHERE board.id = task.board_id AND (LOWER(title) LIKE ? OR LOWER(description) LIKE ?) AND (task.owner_id = ? OR board.members_id LIKE ?)`, [query, "%" + query + "%", ownerId, "%:" + ownerId + ":%"]);
+    var tasks = sql.query(`SELECT task.id AS id, board.token AS board_token, title, description, deadline, priority, completed FROM task, board WHERE board.id = task.board_id AND (LOWER(title) LIKE ? OR LOWER(description) LIKE ?) AND (task.owner_id = ? OR board.members_id LIKE ?)`, ["%" + query + "%", "%" + query + "%", ownerId, "%:" + ownerId + ":%"]);
     var boards = sql.query(`SELECT name, token FROM board WHERE LOWER(name) LIKE ? AND (board.members_id LIKE ? OR board.id = 0)`, ["%" + query + "%", "%:" + ownerId + ":%"]);
     return [true, tasks, boards];
 }
