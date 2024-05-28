@@ -61,7 +61,7 @@ handlers.post("/report", (req, res) => {
         return;
     }
    
-    var name   = req.body["username"];
+    var name   = req.body["name"];
     var email  = req.body["email"];
     var msg    = req.body["msg"];
     var result = core.report(name, email, msg);

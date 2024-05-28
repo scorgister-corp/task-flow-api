@@ -16,21 +16,15 @@ const BAD_TOKEN = -8;
 const BAD_PASSWORD = -9;
 const BAD_ID = -10;
 
-
-function cleanString(input) {
-    return String(input).replace(/'/g, "''");
-}
-
 function generateToken() {
     return uuid.v4();
 }
 
 function hash(input) {
-    return cleanString(sha.sha256(input));
+    return sha.sha256(input);
 }
 
 function createAccount(username, password, email) {
-    var cleanPassword = cleanString(password);
     var errCode = true;
 
     if(!username)
@@ -274,6 +268,18 @@ function deleteTask(taskId) {
     return true;
 }
 
+/**
+ * 
+ * @param {String} name 
+ * @param {String} email 
+ * @param {String} message 
+ */
+function report(name, email, message) {
+    mailer.sendMail(email, "scorgister.corp@gmail.com", name + " would like to contact you", "MESSAGE FROM " + email.toUpperCase() + ":\n\n" + message, (error, infos) => {
+        
+    });
+}
+
 function getCodeMessage(code) {
     switch(code) {
         case NO_USERNAME:
@@ -325,6 +331,7 @@ module.exports.joinBoard = joinBoard;
 module.exports.isRegisteredBoard = isRegisteredBoard;
 module.exports.search = search;
 module.exports.deleteTask = deleteTask;
+module.exports.report = report;
 
 
 module.exports.getCodeMessage = getCodeMessage;
