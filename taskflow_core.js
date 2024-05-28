@@ -245,7 +245,7 @@ function addBoard(title, ownerToken) {
         return [BAD_TOKEN, null];
 
     var boardToken = generateToken();
-    sql.query(`INSERT INTO board (name, members_id, token) VALUES (?, ?, ?)`, [title, ownerId, boardToken]);
+    sql.query(`INSERT INTO board (name, members_id, token) VALUES (?, ?, ?)`, [title, ":" + ownerId + ":", boardToken]);
     return [true, boardToken];
 }
 
