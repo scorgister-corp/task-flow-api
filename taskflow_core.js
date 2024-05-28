@@ -105,8 +105,6 @@ function getTask(id) {
 }
 
 function updateTaskState(id, completed) {
-    completed = cleanString(completed);
-
     var result = sql.query(`UPDATE task SET completed = ? WHERE id = ?`, [completed, id]);
     if(result.length == 0)
         return BAD_ID;
