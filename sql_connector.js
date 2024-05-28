@@ -26,12 +26,16 @@ function connect() {
     return true;
 }
 
-function query(sql) {
+function query(sql, datas = undefined) {
     if(!databaseConn)
         return;
-    
+
     try {
-        return databaseConn.query(sql);
+        if(datas == undefined)
+            return databaseConn.query(sql);
+        else
+            return databaseConn.query(sql, datas);
+
     }
     catch(err) {
         log.printError(err)

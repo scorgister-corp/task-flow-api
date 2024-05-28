@@ -30,53 +30,43 @@ function hash(input) {
 }
 
 function createAccount(username, password, email) {
-    var cleanUsername = cleanString(username);
     var cleanPassword = cleanString(password);
-    var cleanEmail = cleanString(email);
     var errCode = true;
 
-    if (!cleanUsername)
+    if(!username)
         errCode = NO_USERNAME;
-    else if (!password)
+    else if(!password)
         errCode =  NO_PASSWORD;
-    else if (!cleanEmail)
+    else if(!email)
         errCode =  NO_EMAIL;
-    else if (sql.query(`SELECT COUNT(username) AS c FROM profile WHERE username = "${cleanUsername}"`)[0]["c"] != 0)
+    else if(sql.query(`SELECT COUNT(username) AS c FROM profile WHERE username = ?`, [username])[0]["c"] != 0)
         errCode =  USED_USERNAME;
-    else if (!cleanEmail.toLowerCase().match(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/))
+    else if(!email.toLowerCase().match(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/))
         errCode =  MAIL_ERR;
-    else if (sql.query(`SELECT COUNT(email) AS c FROM profile WHERE email = "${cleanEmail}"`)[0]["c"] != 0)
+    else if(sql.query(`SELECT COUNT(email) AS c FROM profile WHERE email = ?`, [email])[0]["c"] != 0)
         errCode =  USED_EMAIL;
 
-    if (errCode != true) {
-        log.printError("Error " + errCode + " with account creation: " + cleanUsername + ", " + cleanEmail);
+    if(errCode != true) {
+        log.printError("Error " + errCode + " with account creation: " + username + ", " + cleanEmail);
 
         return errCode;
     }
 
-    var sqlQuery = `INSERT INTO profile (username, password, email, token) VALUES ("${cleanUsername}", "${hash(cleanPassword)}", "${cleanEmail}", "${generateToken()}")`;
-    sql.query(sqlQuery);
+    sql.query(`INSERT INTO profile (username, password, email, token) VALUES (?, ?, ?, ?)`, [username, hash(password), email, generateToken()]);
 
-    log.print("Account creation success: " + cleanUsername + ", " + cleanEmail);
+    log.print("Account creation success: " + username + ", " + email);
 
     return true;
 }
 
 function checkToken(token) {
-    var cleanToken = cleanString(token);
-
-    var sqlQuery = `SELECT * FROM profile WHERE token = "${cleanToken}"`;
-
-    if (sql.query(sqlQuery).length == 0)
+    if(sql.query(`SELECT * FROM profile WHERE token = ?`, [token]).length == 0)
         return false;
     
     return true;
 }
 
 function isRegisteredBoard(token, boardToken) {
-    token = cleanString(token);
-    boardToken = cleanString(boardToken);
-
     var id = getIdFromToken(token);
     if(id == undefined || id == "")
         return BAD_TOKEN;
@@ -85,7 +75,7 @@ function isRegisteredBoard(token, boardToken) {
     if(boardToken == undefined || boardToken == "")
         return BAD_TOKEN;
 
-    var result = sql.query(`SELECT * FROM board WHERE members_id LIKE '%:${id}:%' AND id = "${boardToken}"`);
+    var result = sql.query(`SELECT * FROM board WHERE members_id LIKE ? AND id = ?`, ["%:" + id + ":%", boardToken]);
 
     if(result.length == 0)
         return false;
@@ -94,44 +84,36 @@ function isRegisteredBoard(token, boardToken) {
 }
 
 
-function getIdFromToken(token) {
-    token = cleanString(token);
-    
-    var result = sql.query(`SELECT id FROM profile WHERE token = "${token}"`);
+function getIdFromToken(token) {    
+    var result = sql.query(`SELECT id FROM profile WHERE token = ?`, [token]);
     if(result.length == 0)
         return undefined;
     return result[0]["id"];
 }
 
-function getBoardIdFromBoardToken(token) {
-    token = cleanString(token);
-    
-    var result = sql.query(`SELECT id FROM board WHERE token = "${token}"`);
+function getBoardIdFromBoardToken(token) {    
+    var result = sql.query(`SELECT id FROM board WHERE token = ?`, [token]);
     if(result.length == 0)
         return undefined;
     return result[0]["id"];
 }
 
 function getTasksFromToken(token) {
-    var cleanToken = cleanString(token);
-
-    var sqlQuery = `SELECT task.id AS id, board.token AS board_token, title, description, deadline, priority, completed FROM task, profile, board WHERE task.owner_id = profile.id AND board.id = board_id AND profile.token = "${cleanToken}"`;
-    return sql.query(sqlQuery);
+    return sql.query(`SELECT task.id AS id, board.token AS board_token, title, description, deadline, priority, completed FROM task, profile, board WHERE task.owner_id = profile.id AND board.id = board_id AND profile.token = ?`, [token]);
 }
 
 function getTask(id) {
-    id = cleanString(id);
-    var result = sql.query(`SELECT title, description, deadline, priority, completed FROM task WHERE id = "${id}"`);
+    var result = sql.query(`SELECT title, description, deadline, priority, completed FROM task WHERE id = ?`, [id]);
     if(result.length == 0)
         return {tile: undefined, description: undefined, deadline: undefined, priority: undefined, completed: undefined};
+
     return result[0];
 }
 
 function updateTaskState(id, completed) {
-    id = cleanString(id);
     completed = cleanString(completed);
 
-    var result = sql.query(`UPDATE task SET completed = "${completed}" WHERE id = "${id}"`);
+    var result = sql.query(`UPDATE task SET completed = ? WHERE id = ?`, [completed, id]);
     if(result.length == 0)
         return BAD_ID;
 
@@ -139,35 +121,23 @@ function updateTaskState(id, completed) {
 }
 
 function getTokenFromAccountInfo(username, password) {
-    var cleanUsername = cleanString(username);
-    var cleanPassword = cleanString(password)
-
-    var sqlQuery = `SELECT token FROM profile WHERE username = "${cleanUsername}" AND password = "${hash(cleanPassword)}"`;
-    var result = sql.query(sqlQuery);
-    if(result.length == 0) {
+    var result = sql.query(`SELECT token FROM profile WHERE username = ? AND password = ?`, [username, hash(password)]);
+    if(result.length == 0)
         return false;
-    }
+
     return result[0]["token"];
 }
 
 function getProfileInfoFromId(id) {
-    var id = cleanString(id);
-
-    var sqlQuery = `SELECT username, email FROM profile WHERE id = "${id}"`;
-    var result = sql.query(sqlQuery);
-
+    var result = sql.query(`SELECT username, email FROM profile WHERE id = ?`, [id]);
     if(result)
         return result[0];
 
-    return BAD;
+    return BAD_ID;
 }
 
 function getProfileInfo(token) {
-    var cleanToken = cleanString(token);
-
-    var sqlQuery = `SELECT username, email FROM profile WHERE token = "${cleanToken}"`;
-    var result = sql.query(sqlQuery);
-
+    var result = sql.query(`SELECT username, email FROM profile WHERE token = ?`, [token]);
     if(result)
         return result[0];
 
@@ -175,25 +145,21 @@ function getProfileInfo(token) {
 }
 
 function getBoards(token) {
-    var token = cleanString(token);
-
     var ownerId = getIdFromToken(token);
     if(ownerId == undefined)
         return BAD_TOKEN;
 
-    var result = sql.query(`SELECT name, token FROM board WHERE members_id LIKE '%:${ownerId}:%' OR id = 0`);
+    var result = sql.query(`SELECT name, token FROM board WHERE members_id LIKE ? OR id = 0`, ["%:" + ownerId + ":%"]);
     
     return result;
 }
 
 function getBoard(token, boardToken) {
-    var token = cleanString(token);
-
     var ownerId = getIdFromToken(token);
     if(ownerId == undefined)
         return [BAD_TOKEN, null, null];
 
-    var result = sql.query(`SELECT name, members_id FROM board WHERE (members_id LIKE '%:${ownerId}:%' OR id = 0) AND token = "${boardToken}"`);
+    var result = sql.query(`SELECT name, members_id FROM board WHERE (members_id LIKE ? OR id = 0) AND token =?`, ["%:" + ownerId + ":%", boardToken]);
     if(result.length == 0)
         return [BAD_TOKEN, null, null];
 
@@ -218,8 +184,6 @@ function getBoard(token, boardToken) {
 }
 
 function getBoardTasks(token, boardToken) {
-    var boardToken = cleanString(boardToken);
-
     var boardId = getBoardIdFromBoardToken(boardToken);
 
     if(boardId == undefined) {
@@ -227,17 +191,14 @@ function getBoardTasks(token, boardToken) {
     }
 
     if(boardId == 0)
-        var result = sql.query(`SELECT task.id, title, description, deadline, priority, completed FROM task, profile WHERE task.owner_id = profile.id AND profile.token = "${token}" AND task.board_id = 0`);
+        var result = sql.query(`SELECT task.id, title, description, deadline, priority, completed FROM task, profile WHERE task.owner_id = profile.id AND profile.token = ? AND task.board_id = 0`, [token]);
     else
-        var result = sql.query(`SELECT task.id, title, description, deadline, priority, completed FROM task WHERE task.board_id = ${boardId}`);
+        var result = sql.query(`SELECT task.id, title, description, deadline, priority, completed FROM task WHERE task.board_id = ?`, [boardId]);
     
     return [true, result];
 }
 
 function joinBoard(token, boardToken) {
-    var token = cleanString(token);
-    var boardToken = cleanString(boardToken);
-
     var registered = isRegisteredBoard(token, boardToken);
 
     if(registered == true)
@@ -245,30 +206,24 @@ function joinBoard(token, boardToken) {
     else if(registered == BAD_TOKEN)
         return BAD_TOKEN;
     
-    sql.query(`UPDATE board SET members_id = CONCAT((SELECT members_id FROM board WHERE token = "${boardToken}"), "${getIdFromToken(token)}:") WHERE token = "${boardToken}"`);
+    sql.query(`UPDATE board SET members_id = CONCAT((SELECT members_id FROM board WHERE token = ?), ?) WHERE token = ?`, [boardToken, getIdFromToken(token) + ":", boardToken]);
     return true;
 }
 
 function updateProfileInfo(token, username, email, currentPassword, newPassword) {
-    token = cleanString(token);
-    username = cleanString(username);
-    email = cleanString(email);
-    currentPassword = cleanString(currentPassword);
-    newPassword = cleanString(newPassword);
-
     if(currentPassword != "" && newPassword != "") {
-        var validPassword = sql.query(`SELECT * FROM profile WHERE password = "${hash(currentPassword)}" AND token = "${token}"`);
+        var validPassword = sql.query(`SELECT * FROM profile WHERE password = ? AND token = ?`, [hash(currentPassword), token]);
         if(validPassword.length == 0)
             return BAD_PASSWORD;
-        sql.query(`UPDATE profile SET password = "${hash(newPassword)}" WHERE token = "${token}"`);
+        sql.query(`UPDATE profile SET password = ? WHERE token = ?`, [hash(newPassword, token)]);
 
     }
     if(username != "")
-        sql.query(`UPDATE profile SET username = "${username}" WHERE token = "${token}"`);
+        sql.query(`UPDATE profile SET username = ? WHERE token = ?`, [username, token]);
     
     if(email != "")
         if(email.toLowerCase().match(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/))
-            sql.query(`UPDATE profile SET email = "${email}" WHERE token = "${token}"`);
+            sql.query(`UPDATE profile SET email = ? WHERE token = ?`, [email, token]);
         else
             return MAIL_ERR
     
@@ -276,13 +231,6 @@ function updateProfileInfo(token, username, email, currentPassword, newPassword)
 }
 
 function addTask(title, description, priority, deadline, ownerToken, boardToken) {
-    title = cleanString(title);
-    description = cleanString(description);
-    priority = cleanString(priority);
-    deadline = cleanString(deadline);
-    ownerToken = cleanString(ownerToken);
-    boardToken = cleanString(boardToken);
-
     var ownerId = getIdFromToken(ownerToken);
     if(ownerId == undefined)
         return BAD_TOKEN;
@@ -292,38 +240,32 @@ function addTask(title, description, priority, deadline, ownerToken, boardToken)
         return BAD_TOKEN;
 
     if(deadline == "")
-        sql.query(`INSERT INTO task (owner_id, board_id, title, description, priority) VALUES ("${ownerId}", "${boardId}", "${title}", "${description}", "${priority}")`)
+        sql.query(`INSERT INTO task (owner_id, board_id, title, description, priority) VALUES (?, ?, ?, ?, ?)`, [ownerId, boardId, title, description, priority]);
     else
-        sql.query(`INSERT INTO task (owner_id, board_id, title, description, deadline, priority) VALUES ("${ownerId}", "${boardId}", "${title}", "${description}", "${deadline}", "${priority}")`)
+        sql.query(`INSERT INTO task (owner_id, board_id, title, description, deadline, priority) VALUES (?, ?, ?, ?, ?, ?)`, [ownerId, boardId, title, description, deadline, priority])
 
     return true;
 }
 
 function addBoard(title, ownerToken) {
-    title = cleanString(title);
-    ownerToken = cleanString(ownerToken);
-
     var ownerId = getIdFromToken(ownerToken);
     if(ownerId == undefined)
         return [BAD_TOKEN, null];
 
     var boardToken = generateToken();
-    sql.query(`INSERT INTO board (name, members_id, token) VALUES ("${title}", ":${ownerId}:", "${boardToken}")`);
+    sql.query(`INSERT INTO board (name, members_id, token) VALUES (?, ?, ?)`, [title, ownerId, boardToken]);
     return [true, boardToken];
 }
 
 function search(query, token) {
-    query = cleanString(query);
-    token = cleanString(token);
-
     var ownerId = getIdFromToken(token);
     if(ownerId == undefined)
         return [BAD_TOKEN, null, null];
 
     query = query.toLowerCase();
 
-    var tasks = sql.query(`SELECT task.id AS id, board.token AS board_token, title, description, deadline, priority, completed FROM task, board WHERE board.id = task.board_id AND (LOWER(title) LIKE "%${query}%" OR LOWER(description) LIKE "%${query}%") AND (task.owner_id = "${ownerId}" OR board.members_id LIKE "%:${ownerId}:%")`)
-    var boards = sql.query(`SELECT name, token FROM board WHERE LOWER(name) LIKE "%${query}%" AND (board.members_id LIKE "%:${ownerId}:%" OR board.id = 0)`)
+    var tasks = sql.query(`SELECT task.id AS id, board.token AS board_token, title, description, deadline, priority, completed FROM task, board WHERE board.id = task.board_id AND (LOWER(title) LIKE ? OR LOWER(description) LIKE ?) AND (task.owner_id = ? OR board.members_id LIKE ?)`, [query, "%" + query + "%", ownerId, "%:" + ownerId + ":%"]);
+    var boards = sql.query(`SELECT name, token FROM board WHERE LOWER(name) LIKE ? AND (board.members_id LIKE ? OR board.id = 0)`, ["%" + query + "%", "%:" + ownerId + ":%"]);
     return [true, tasks, boards];
 }
 
