@@ -48,7 +48,7 @@ function createAccount(username, password, email) {
     else if (sql.query(`SELECT COUNT(email) AS c FROM profile WHERE email = "${cleanEmail}"`)[0]["c"] != 0)
         errCode =  USED_EMAIL;
 
-    if (errCode != 0) {
+    if (errCode != true) {
         log.printError("Error " + errCode + " with account creation: " + cleanUsername + ", " + cleanEmail);
 
         return errCode;
