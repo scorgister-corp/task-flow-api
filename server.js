@@ -113,6 +113,23 @@ handlers.post("/task", (req, res) => {
     send(res, task);
 });
 
+handlers.post("/task/update", (req, res) => {
+    var token = getTokenFromHeader(req);
+    if(req.body["id"] == undefined || req.body["id"] == "") {
+        send400(res);
+        return;
+    }
+
+    var id = req.body["id"];
+    var title = req.body["title"];
+    var description = req.body["description"];
+    var priority = req.body["priority"];
+    var deadline = req.body["deadline"];
+    
+    var code = core.updateTask(id, title, description, priority, deadline);
+    send(res, {code: code, message: core.getCodeMessage(code)});
+});
+
 handlers.post("/task/update/state", (req, res) => {
     if(req.body["id"] == undefined || req.body["id"] == "" ||
         req.body["completed"] == undefined || req.body["completed"] == "") {
@@ -129,13 +146,6 @@ handlers.post("/task/update/state", (req, res) => {
 });
 
 handlers.post("/add", (req, res) => {
-    if(req.body["title"] == undefined || req.body["title"] == "" ||
-        req.body["priority"] == undefined || req.body["priority"] == "" ||
-        req.body["boardToken"] == undefined || req.body["boardToken"] == "") {
-        send400(res);
-        return;
-    }
-
     var token = getTokenFromHeader(req);
 
     var title = req.body["title"];

@@ -16,6 +16,7 @@ const BAD_TOKEN = -8;
 const BAD_PASSWORD = -9;
 const BAD_ID = -10;
 const NO_TITLE = -11;
+const NO_PRIORITY = -12;
 
 function generateToken() {
     return uuid.v4();
@@ -100,8 +101,6 @@ function getTasksFromToken(token) {
 
     return sql.query(`SELECT task.id AS id, board.token AS board_token, title, description, deadline, priority, completed FROM task, board WHERE (board.id = 0 AND task.board_id = board.id AND task.owner_id = ?) OR (board.id != 0 AND task.board_id = board.id AND board.members_id LIKE ?)`, [ownerId, "%:" + ownerId + ":%"]);
 }
-
-//     
 
 function getTask(id) {
     var result = sql.query(`SELECT title, description, deadline, priority, completed FROM task WHERE id = ?`, [id]);
@@ -265,6 +264,13 @@ function updateProfileInfo(token, username, email, currentPassword, newPassword)
 }
 
 function addTask(title, description, priority, deadline, ownerToken, boardToken) {
+    if(title == undefined || title == "")
+        return NO_TITLE;
+    if(priority == undefined || priority == "")
+        return NO_PRIORITY;
+    if(boardToken == undefined || boardToken == "")
+        return BAD_TOKEN;
+
     var ownerId = getIdFromToken(ownerToken);
     if(ownerId == undefined)
         return BAD_TOKEN;
@@ -277,6 +283,20 @@ function addTask(title, description, priority, deadline, ownerToken, boardToken)
         sql.query(`INSERT INTO task (owner_id, board_id, title, description, priority) VALUES (?, ?, ?, ?, ?)`, [ownerId, boardId, title, description, priority]);
     else
         sql.query(`INSERT INTO task (owner_id, board_id, title, description, deadline, priority) VALUES (?, ?, ?, ?, ?, ?)`, [ownerId, boardId, title, description, deadline, priority])
+
+    return true;
+}
+
+function updateTask(id, title, description, priority, deadline) {
+    if(title == undefined || title == "")
+        return NO_TITLE;
+    if(priority == undefined || priority == "")
+        return NO_PRIORITY;
+    
+    if(deadline == "")
+        sql.query(`UPDATE task SET title = ?, description = ?, deadline = null, priority = ? WHERE id = ?`, [title, description, priority, id]);
+    else
+        sql.query(`UPDATE task SET title = ?, description = ?, deadline = ?, priority = ? WHERE id = ?`, [title, description, deadline, priority, id]);
 
     return true;
 }
@@ -410,6 +430,7 @@ module.exports.isRegisteredBoard = isRegisteredBoard;
 module.exports.search = search;
 module.exports.deleteTask = deleteTask;
 module.exports.leaveBoard = leaveBoard;
+module.exports.updateTask = updateTask;
 module.exports.report = report;
 
 
