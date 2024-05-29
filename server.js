@@ -177,6 +177,20 @@ handlers.post("/search", (req, res) => {
     send(res, {code: result[0], message: core.getCodeMessage(result[0]), tasks: result[1], boards: result[2]});
 });
 
+handlers.post("/board/leave", (req, res) => {
+    if(req.body["token"] == undefined || req.body["token"] == "") {
+        send400(res);
+        return;
+    }
+    
+    var token = getTokenFromHeader(req);
+    var boardToken = req.body["token"];
+    
+    var result = core.leaveBoard(token, boardToken);
+
+    send(res, {code: result, message: core.getCodeMessage(result)});
+});
+
 handlers.get("/boards", (req, res) => {
     var token = getTokenFromHeader(req);
     

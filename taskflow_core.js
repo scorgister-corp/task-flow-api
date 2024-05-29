@@ -93,8 +93,14 @@ function getBoardIdFromBoardToken(token) {
 }
 
 function getTasksFromToken(token) {
-    return sql.query(`SELECT task.id AS id, board.token AS board_token, title, description, deadline, priority, completed FROM task, profile, board WHERE task.owner_id = profile.id AND board.id = board_id AND profile.token = ?`, [token]);
+    var ownerId = getIdFromToken(token);
+    if(ownerId == undefined)
+        return [];
+
+    return sql.query(`SELECT task.id AS id, board.token AS board_token, title, description, deadline, priority, completed FROM task, board WHERE (board.id = 0 AND task.board_id = board.id AND task.owner_id = ?) OR (board.id != 0 AND task.board_id = board.id AND board.members_id LIKE ?)`, [ownerId, "%:" + ownerId + ":%"]);
 }
+
+//     
 
 function getTask(id) {
     var result = sql.query(`SELECT title, description, deadline, priority, completed FROM task WHERE id = ?`, [id]);
@@ -144,6 +150,31 @@ function getBoards(token) {
     var result = sql.query(`SELECT name, token FROM board WHERE members_id LIKE ? OR id = 0`, ["%:" + ownerId + ":%"]);
     
     return result;
+}
+
+/**
+ * 
+ * @param {Array} boardToken 
+ * @returns 
+ */
+function getBoardMembers(boardToken) {
+    var result = sql.query(`SELECT members_id FROM board WHERE token = ?`, [boardToken]);
+    if(result.length == 0)
+        return [BAD_TOKEN, null, null];
+
+    result = result[0];
+    var mem = result["members_id"];
+    mem = mem.split(':');
+
+    var ret = [];
+    for(var i = 0; i < mem.length; i++) {
+        if(mem[i] == "")
+            continue;
+
+        ret.push(mem[i]);
+    }
+
+    return ret;
 }
 
 function getBoard(token, boardToken) {
@@ -210,8 +241,18 @@ function updateProfileInfo(token, username, email, currentPassword, newPassword)
         sql.query(`UPDATE profile SET password = ? WHERE token = ?`, [hash(newPassword, token)]);
 
     }
+
+    var ownerId = getIdFromToken(token);
+    if(ownerId == undefined)
+        return BAD_TOKEN;
+
+    if(sql.query(`SELECT COUNT(username) AS c FROM profile WHERE username = ? AND id != ?`, [username, ownerId])[0]["c"] != 0)
+        return USED_USERNAME;
+
     if(username != "")
         sql.query(`UPDATE profile SET username = ? WHERE token = ?`, [username, token]);
+    else
+        return NO_USERNAME;
     
     if(email != "")
         if(email.toLowerCase().match(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/))
@@ -263,6 +304,39 @@ function search(query, token) {
 
 function deleteTask(taskId) {
     sql.query(`DELETE FROM task WHERE id = ?`, [taskId]);
+    return true;
+}
+
+function leaveBoard(token, boardToken) {
+    var ownerId = getIdFromToken(token);
+    if(ownerId == undefined)
+        return BAD_TOKEN;
+
+    var boardId = getBoardIdFromBoardToken(boardToken);
+    if(boardId == undefined)
+        return BAD_TOKEN;
+
+    var members = getBoardMembers(boardToken);
+
+    if(members.length <= 1) {
+        sql.query(`DELETE FROM task WHERE board_id = ?`, [boardId]);
+
+        sql.query(`DELETE FROM board WHERE token = ?`, [boardToken]);
+        return true;
+    }
+
+    if(members.indexOf(ownerId.toString()) < 0)
+        return BAD_TOKEN;
+
+    var membersId = ":";
+    for(var i = 0; i < members.length; i++) {
+        if(members[i] == ownerId)
+            continue;
+
+        membersId += members[i] + ":"
+    }
+        
+    sql.query(`UPDATE board SET members_id = ? WHERE token = ?`, [membersId, boardToken]);
     return true;
 }
 
@@ -329,6 +403,7 @@ module.exports.joinBoard = joinBoard;
 module.exports.isRegisteredBoard = isRegisteredBoard;
 module.exports.search = search;
 module.exports.deleteTask = deleteTask;
+module.exports.leaveBoard = leaveBoard;
 module.exports.report = report;
 
 
