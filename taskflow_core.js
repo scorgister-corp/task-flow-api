@@ -15,6 +15,7 @@ const TOO_MANY_RESULTS_ERR = -7;
 const BAD_TOKEN = -8;
 const BAD_PASSWORD = -9;
 const BAD_ID = -10;
+const NO_TITLE = -11;
 
 function generateToken() {
     return uuid.v4();
@@ -41,7 +42,7 @@ function createAccount(username, password, email) {
         errCode =  USED_EMAIL;
 
     if(errCode != true) {
-        log.printError("Error " + errCode + " with account creation: " + username + ", " + cleanEmail);
+        log.printError("Error " + errCode + " with account creation: " + username + ", " + email);
 
         return errCode;
     }
@@ -285,6 +286,9 @@ function addBoard(title, ownerToken) {
     if(ownerId == undefined)
         return [BAD_TOKEN, null];
 
+    if(title == undefined || title == "")
+        return [NO_TITLE, null]
+
     var boardToken = generateToken();
     sql.query(`INSERT INTO board (name, members_id, token) VALUES (?, ?, ?)`, [title, ":" + ownerId + ":", boardToken]);
     return [true, boardToken];
@@ -374,6 +378,8 @@ function getCodeMessage(code) {
             return "bad password";
         case BAD_ID:
             return "bad id";
+        case NO_TITLE:
+            return "no title";
 
         case 1:
         case true:
