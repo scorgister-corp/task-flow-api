@@ -238,7 +238,7 @@ function updateProfileInfo(token, username, email, currentPassword, newPassword)
         var validPassword = sql.query(`SELECT * FROM profile WHERE password = ? AND token = ?`, [hash(currentPassword), token]);
         if(validPassword.length == 0)
             return BAD_PASSWORD;
-        sql.query(`UPDATE profile SET password = ? WHERE token = ?`, [hash(newPassword, token)]);
+        sql.query(`UPDATE profile SET password = ? WHERE token = ?`, [hash(newPassword), token]);
 
     }
 
