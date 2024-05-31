@@ -8,7 +8,7 @@ const log = logger("Server");
 const app = express();
 app.use(express.json());
 
-const VERSION = "1.0"
+const VERSION = "1.0.2"
 const BAD_CREDENTIALS = "bad credentials";
 
 const handlers = handler(app, defaultMethodNotAllowedHandler);
@@ -108,8 +108,10 @@ handlers.post("/task", (req, res) => {
     }
 
     var id = req.body["id"];
+    var token = getTokenFromHeader(req);
 
-    var task = core.getTask(id);
+    var task = core.getTask(id, token);
+    
     send(res, task);
 });
 
@@ -126,7 +128,7 @@ handlers.post("/task/update", (req, res) => {
     var priority = req.body["priority"];
     var deadline = req.body["deadline"];
     
-    var code = core.updateTask(id, title, description, priority, deadline);
+    var code = core.updateTask(id, token, title, description, priority, deadline);
     send(res, {code: code, message: core.getCodeMessage(code)});
 });
 
@@ -140,8 +142,10 @@ handlers.post("/task/update/state", (req, res) => {
 
     var id = req.body["id"];
     var completed = req.body["completed"];
+
+    var token = getTokenFromHeader(req);
     
-    var code = core.updateTaskState(id, completed);
+    var code = core.updateTaskState(id, token, completed);
     send(res, {code: code, message: core.getCodeMessage(code)});
 });
 

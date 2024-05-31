@@ -55,6 +55,16 @@ function createAccount(username, password, email) {
     return true;
 }
 
+function isUserTaskAuthorize(taskId, userToken) {
+    var ownerId = getIdFromToken(userToken);
+    if(ownerId == undefined)
+        return false;
+
+    var res = sql.query(`SELECT COUNT(*) AS c FROM task, board WHERE (task.board_id = 0 AND board.id = task.board_id AND task.owner_id = ? AND task.id = ?) OR (task.board_id != 0 AND board.id = task.board_id AND task.id = ? AND board.members_id LIKE ?)`, [ownerId, taskId, taskId,  "%:" + ownerId + ":%"]);
+    
+    return res[0]["c"] >= 1;
+}
+
 function checkToken(token) {
     if(sql.query(`SELECT * FROM profile WHERE token = ?`, [token]).length == 0)
         return false;
@@ -102,7 +112,10 @@ function getTasksFromToken(token) {
     return sql.query(`SELECT task.id AS id, board.token AS board_token, title, description, deadline, priority, completed FROM task, board WHERE (board.id = 0 AND task.board_id = board.id AND task.owner_id = ?) OR (board.id != 0 AND task.board_id = board.id AND board.members_id LIKE ?)`, [ownerId, "%:" + ownerId + ":%"]);
 }
 
-function getTask(id) {
+function getTask(id, token) {
+    if(!isUserTaskAuthorize(id, token))
+        return {code: BAD_TOKEN, message: getCodeMessage(BAD_TOKEN)};
+    
     var result = sql.query(`SELECT title, description, deadline, priority, completed FROM task WHERE id = ?`, [id]);
     if(result.length == 0)
         return {tile: undefined, description: undefined, deadline: undefined, priority: undefined, completed: undefined};
@@ -110,7 +123,10 @@ function getTask(id) {
     return result[0];
 }
 
-function updateTaskState(id, completed) {
+function updateTaskState(id, token, completed) {
+    if(!isUserTaskAuthorize(id, token))
+        return BAD_TOKEN;
+
     var result = sql.query(`UPDATE task SET completed = ? WHERE id = ?`, [completed, id]);
     if(result.length == 0)
         return BAD_ID;
@@ -287,11 +303,14 @@ function addTask(title, description, priority, deadline, ownerToken, boardToken)
     return true;
 }
 
-function updateTask(id, title, description, priority, deadline) {
+function updateTask(id, token, title, description, priority, deadline) {
     if(title == undefined || title == "")
         return NO_TITLE;
     if(priority == undefined || priority == "")
         return NO_PRIORITY;
+
+    if(!isUserTaskAuthorize(id, token))
+        return BAD_TOKEN;
     
     if(deadline == "")
         sql.query(`UPDATE task SET title = ?, description = ?, deadline = null, priority = ? WHERE id = ?`, [title, description, priority, id]);
@@ -432,6 +451,7 @@ module.exports.deleteTask = deleteTask;
 module.exports.leaveBoard = leaveBoard;
 module.exports.updateTask = updateTask;
 module.exports.report = report;
+module.exports.isUserTaskAuthorize = isUserTaskAuthorize;
 
 
 module.exports.getCodeMessage = getCodeMessage;
