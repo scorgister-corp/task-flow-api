@@ -1,17 +1,33 @@
 const express = require('express');
 const handler = require('./handler')
 const core = require('./taskflow_core')
+const webpush = require("web-push");
+const env = require('./env');
 const logger = require('./logger');
 
 const log = logger("Server");
+const notifLog = logger("Notification");
 
 const app = express();
 app.use(express.json());
+
+const ENV_DATA = env.loadFile("./.env");
+
+const vapidKeys = {
+    publicKey: ENV_DATA["PUBLIC_PUSH_KEY"],
+    privateKey: ENV_DATA["PRIVATE_PUSH_KEY"]
+};
 
 const VERSION = "1.0.2"
 const BAD_CREDENTIALS = "bad credentials";
 
 const handlers = handler(app, defaultMethodNotAllowedHandler);
+
+webpush.setVapidDetails(
+    "mailto:" + ENV_DATA["EMAIL_ADDRESS"],
+    vapidKeys.publicKey,
+    vapidKeys.privateKey
+);
 
 // -- WITHOUT TOKEN -- \\
 
@@ -86,6 +102,7 @@ handlers.all("*", (req, res, next) => {
 });
 
 // ---- WITH TOKEN ---- \\
+
 
 handlers.get("/auth", (req, res) => {
     send(res, {valid: true});
@@ -182,8 +199,9 @@ handlers.post("/search", (req, res) => {
         send400(res);
         return;
     }
+    
     var token = getTokenFromHeader(req);
-
+    
     var query = req.body["query"];
     
     var result = core.search(query, token);
@@ -290,6 +308,22 @@ handlers.post("/task/delete", (req, res) => {
     send(res, {code: result, message: core.getCodeMessage(result)});
 });
 
+// --NOTIFICATIONS-- \\
+
+handlers.post("/notif/subscribe", (req, res) => {
+    var token = getTokenFromHeader(req);
+
+    var result = core.subscribeNotif(token, req.body);
+    if(result == false) {
+        send400(res);
+        return;
+    }
+    if(result == true)
+        send(res, {}, 201)
+    else
+        send(res, {code: result, message: core.getCodeMessage(result)});
+});
+
 // send 404
 handlers.all("*", (req, res) => {
     send404(res);
@@ -338,6 +372,46 @@ function send(res, body, code=200) {
     res.json(body);
 }
 
+function sendNotification(token, title, body, icon, url) {
+    const notificationPayload = {
+        notification: {
+            title: title,
+            body: body,
+            icon: icon,
+            data: {
+                url: url
+            }
+        }
+    };
+  
+    const promises = [];
+    
+    var subscriptions = [];
+    if(token === "*")
+        subscriptions = core.getSubscribersNotif();
+    else {
+        subscriptions = core.getSubscriberNotifFromToken(token);
+        if(subscriptions == core.BAD_TOKEN)
+            return subscriptions;
+    }
+
+    subscriptions.forEach(subscription => {
+        promises.push(
+            webpush.sendNotification(subscription, JSON.stringify(notificationPayload))
+        );
+    });
+  
+    Promise.all(promises).then(() => {})
+        .catch(err => {
+            notifLog.printError("Error sending notification");
+    });
+}
+
+
+function sendToAllNotification(title, body, icon, url) {
+    sendNotification("*", title, body, icon, url);
+}
+
 module.exports.start = (port=8100) => {
     // init database connection
     if(core.connect() === false) {
@@ -355,3 +429,10 @@ module.exports.start = (port=8100) => {
     });
     return true;
 };
+
+module.exports.send = send;
+module.exports.send400 = send400;
+module.exports.send401 = send401;
+module.exports.send404 = send404;
+module.exports.send405 = send405;
+module.exports.sendToAllNotification = sendToAllNotification;

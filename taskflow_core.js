@@ -5,6 +5,7 @@ const mailer = require('./mailer');
 const uuid = require('uuid');
 const sha = require('js-sha256')
 
+
 const NO_USERNAME = -1;
 const NO_PASSWORD = -2;
 const NO_EMAIL = -3;
@@ -395,6 +396,59 @@ function report(name, email, message) {
     });
 }
 
+function subscribeNotif(token, subscription) {
+    if(subscription["endpoint"] == undefined || subscription["endpoint"] == "" || 
+        subscription["keys"]["auth"] == undefined || subscription["keys"]["auth"] == "" || 
+        subscription["keys"]["p256dh"] == undefined || subscription["keys"]["p256dh"] == "") {
+            return false;
+    }
+
+    var ownerId = getIdFromToken(token);
+    if(ownerId == undefined)
+        return BAD_TOKEN;
+
+    sql.query(`INSERT INTO notification (profile_id, endpoint, auth, p256dh) VALUES (?, ?, ?, ?)`, [ownerId, subscription["endpoint"], subscription["keys"]["auth"], subscription["keys"]["p256dh"]]);
+    return true;
+}
+
+function getSubscribersNotif() {
+    var result = sql.query(`SELECT endpoint, auth, p256dh FROM notification`);
+    var subscribers = []
+    result.forEach(element => {
+        var data = {
+            endpoint: element["endpoint"],
+            keys: {
+                auth: element["auth"],
+                p256dh: element["p256dh"]
+            }
+        };
+        subscribers.push(data);
+    });
+
+    return subscribers;
+}
+
+function getSubscriberNotifFromToken(token) {
+    var ownerId = getIdFromToken(token);
+    if(ownerId == undefined)
+        return BAD_TOKEN;
+
+    var result = sql.query(`SELECT endpoint, auth, p256dh FROM notification WHERE profile_id = ?`, [ownerId]);
+    var subscribers = []
+    result.forEach(element => {
+        var data = {
+            endpoint: element["endpoint"],
+            keys: {
+                auth: element["auth"],
+                p256dh: element["p256dh"]
+            }
+        };
+        subscribers.push(data);
+    });
+
+    return subscribers;
+}
+
 function getCodeMessage(code) {
     switch(code) {
         case NO_USERNAME:
@@ -452,6 +506,10 @@ module.exports.leaveBoard = leaveBoard;
 module.exports.updateTask = updateTask;
 module.exports.report = report;
 module.exports.isUserTaskAuthorize = isUserTaskAuthorize;
+
+module.exports.subscribeNotif = subscribeNotif
+module.exports.getSubscribersNotif = getSubscribersNotif;
+module.exports.getSubscriberNotifFromToken = getSubscriberNotifFromToken;
 
 
 module.exports.getCodeMessage = getCodeMessage;

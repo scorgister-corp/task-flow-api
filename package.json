@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "server": "node index.js && exit 0",
-    "generate-server-token": "node generate_token.js && exit 0"
+    "server": "node index.js && exit 0"
   },
   "repository": {
     "type": "git",
@@ -32,6 +31,7 @@
     "mysql": "^2.18.1",
     "nodemailer": "^6.9.13",
     "sync-mysql": "^3.0.1",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "web-push": "^3.6.7"
   }
 }
